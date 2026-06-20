@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Master's Hunt — Germany CS Programs</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <div class="logo">MASTER'S<span>HUNT</span></div>
+    <div class="header-stats">
+        <div class="stat-pill"><div class="dot" style="background:#6b7280"></div><span><strong id="count-total">0</strong> unis</span></div>
+        <div class="stat-pill"><div class="dot" style="background:var(--amber)"></div><span><strong id="count-considering">0</strong> considering</span></div>
+        <div class="stat-pill"><div class="dot" style="background:var(--teal)"></div><span><strong id="count-applied">0</strong> applied</span></div>
+        <div class="stat-pill"><span id="deadline-warn" style="color:var(--coral)"></span></div>
+    </div>
+    <div class="header-actions">
+        <span id="syncStatus" class="sync-status" title="Stare sincronizare Firebase">●</span>
+        <button class="export-btn" id="exportBtn">Export JSON</button>
+    </div>
+    <button class="icon-btn mobile-only" id="mobileFilterBtn" aria-label="Open filters">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+    </button>
+    <button class="icon-btn mobile-only" id="mobileListBtn" aria-label="Open university list">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+</header>
+
+<div class="main">
+    <div id="map"></div>
+
+    <!-- Filter Panel — desktop: floating top-left over map. mobile: fullscreen sheet, hidden by default -->
+    <div class="filters" id="filterPanel">
+        <div class="filters-header">
+            Filters
+            <div class="filters-header-actions">
+                <button class="filter-reset" id="filterResetBtn">Reset</button>
+                <button class="icon-btn mobile-only filters-close" id="filterCloseBtn" aria-label="Close filters">✕</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-label">Status</div>
+            <div class="filter-chips">
+                <button class="chip active" data-filter="status" data-val="all">All</button>
+                <button class="chip" data-filter="status" data-val="considering">Considering</button>
+                <button class="chip chip-teal" data-filter="status" data-val="applied">Applied</button>
+                <button class="chip chip-coral" data-filter="status" data-val="rejected">Rejected</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-label">Deadline</div>
+            <div class="filter-chips">
+                <button class="chip active" data-filter="deadline" data-val="all">All</button>
+                <button class="chip" data-filter="deadline" data-val="july">July</button>
+                <button class="chip" data-filter="deadline" data-val="aug">Aug</button>
+                <button class="chip" data-filter="deadline" data-val="sept">Sept–Oct</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-label">Job market in English</div>
+            <div class="filter-chips">
+                <button class="chip active" data-filter="job" data-val="all">All</button>
+                <button class="chip chip-coral" data-filter="job" data-val="low">Low</button>
+                <button class="chip" data-filter="job" data-val="medium">Medium</button>
+                <button class="chip chip-teal" data-filter="job" data-val="good">Good</button>
+                <button class="chip chip-teal" data-filter="job" data-val="high">High</button>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-label">Difficulty</div>
+            <div class="filter-chips">
+                <button class="chip active" data-filter="diff" data-val="all">All</button>
+                <button class="chip chip-teal" data-filter="diff" data-val="relaxed">Relaxed</button>
+                <button class="chip" data-filter="diff" data-val="medium">Medium</button>
+                <button class="chip chip-coral" data-filter="diff" data-val="hard">Hard</button>
+                <button class="chip chip-coral" data-filter="diff" data-val="very-hard">Very hard</button>
+            </div>
+        </div>
+
+        <div class="filter-section last">
+            <div class="filter-label">Max dorm cost</div>
+            <input type="range" id="costSlider" min="200" max="600" value="600" step="10">
+            <div class="range-labels"><span>€200</span><span id="costLabel">Any</span><span>€600+</span></div>
+        </div>
+    </div>
+
+    <!-- backdrop used only on mobile when filter sheet is open -->
+    <div class="sheet-backdrop" id="filterBackdrop"></div>
+
+    <!-- Detail Panel — bottom-left over map on desktop, bottom sheet on mobile -->
+    <div class="detail-panel" id="detailPanel">
+        <div class="panel-header">
+            <div class="panel-city" id="panelCity"></div>
+            <div class="panel-name" id="panelName"></div>
+            <button class="panel-close" id="panelCloseBtn">✕</button>
+        </div>
+        <div class="panel-body" id="panelBody"></div>
+    </div>
+
+    <!-- Legend — bottom-right over map, hidden on mobile to save space -->
+    <div class="legend desktop-only">
+        <div class="legend-title">Status</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#6b7280"></div>Not researched</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div>Considering</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div>Applied</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--coral)"></div>Rejected</div>
+    </div>
+
+    <!-- University list — desktop: fixed right sidebar. mobile: fullscreen sheet, hidden by default -->
+    <div class="uni-list" id="uniList">
+        <div class="uni-list-header">
+            Universities <span id="list-count"></span>
+            <button class="icon-btn mobile-only uni-list-close" id="listCloseBtn" aria-label="Close list">✕</button>
+        </div>
+        <div class="uni-list-search"><input type="text" id="listSearch" placeholder="Search…"></div>
+        <div class="uni-list-scroll" id="uniListScroll"></div>
+    </div>
+</div>
+
+<script src="data.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
