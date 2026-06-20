@@ -423,12 +423,15 @@ function renderList() {
 }
 
 function selectFromList(id) {
+    const isMobile = window.innerWidth <= 480;
+    if (isMobile) closeMobileSheets();
     openPanel(id);
-    if (window.innerWidth <= 480) closeMobileSheets();
-    setTimeout(() => {
-        const el = document.querySelector(`.uni-list-item.active`);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 100);
+    if (!isMobile) {
+        setTimeout(() => {
+            const el = document.querySelector(`.uni-list-item.active`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
 }
 
 // ──────────────────────────────────────────────────────────────
