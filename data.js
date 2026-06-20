@@ -251,7 +251,7 @@ const UNIVERSITIES = [
         dormCost: null,
         nearCities: ["Leipzig 110km", "Berlin 200km", "Prague 150km"],
         jobMarket: "good",
-        difficulty: "hard",
+        difficulty: "very-hard",
         avgSalaryCS: 4000,
         notes: "TU9 university — students report program is stressful. Silicon Saxony semiconductor hub nearby.",
         status: "not-researched"
